@@ -89,60 +89,271 @@ const jobs = new JobDistributor();
 const httpServer = http.createServer((req, res) => {
   if (req.url === '/') {
     // Root page with pool information
+    const uptimeSeconds = Math.floor((Date.now() - metrics.startTime) / 1000);
+    const uptimeDays = Math.floor(uptimeSeconds / 86400);
+    const uptimeHours = Math.floor((uptimeSeconds % 86400) / 3600);
+    const uptimeMinutes = Math.floor((uptimeSeconds % 3600) / 60);
+    const uptimeDisplay = uptimeDays > 0 
+      ? `${uptimeDays}d ${uptimeHours}h ${uptimeMinutes}m`
+      : uptimeHours > 0 
+        ? `${uptimeHours}h ${uptimeMinutes}m`
+        : `${uptimeMinutes}m`;
+    
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Bitcoin Solo Mining Pool</title>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitcoin Solo Mining Pool - Status Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
-    .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    h1 { color: #f7931a; margin-top: 0; }
-    .info { background: #fff9e6; padding: 15px; border-left: 4px solid #f7931a; margin: 20px 0; }
-    .endpoint { background: #f8f8f8; padding: 10px; margin: 10px 0; border-radius: 4px; }
-    a { color: #f7931a; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .status { display: inline-block; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
-    .healthy { background: #d4edda; color: #155724; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    h1 {
+      font-size: 2.5em;
+      font-weight: 700;
+      color: #f7931a;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      color: #b0b0b0;
+      font-size: 1.1em;
+      font-weight: 300;
+    }
+    .warning-banner {
+      background: linear-gradient(135deg, rgba(247, 147, 26, 0.15) 0%, rgba(247, 147, 26, 0.05) 100%);
+      border-left: 4px solid #f7931a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(247, 147, 26, 0.2);
+    }
+    .warning-banner strong {
+      color: #f7931a;
+      font-size: 1.1em;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .warning-banner p {
+      color: #d0d0d0;
+      margin: 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    .card h2 {
+      font-size: 1.3em;
+      color: #f7931a;
+      margin-bottom: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .stat-item:last-child {
+      border-bottom: none;
+    }
+    .stat-label {
+      color: #b0b0b0;
+      font-weight: 500;
+    }
+    .stat-value {
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+    .stat-value.highlight {
+      color: #f7931a;
+    }
+    .connection-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .connection-item {
+      margin-bottom: 15px;
+    }
+    .connection-item:last-child {
+      margin-bottom: 0;
+    }
+    .connection-label {
+      color: #b0b0b0;
+      font-size: 0.9em;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    code {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      color: #f7931a;
+      display: block;
+      word-break: break-all;
+      border: 1px solid rgba(247, 147, 26, 0.2);
+      font-size: 0.95em;
+    }
+    .endpoint-link {
+      display: inline-flex;
+      align-items: center;
+      color: #f7931a;
+      text-decoration: none;
+      padding: 8px 16px;
+      background: rgba(247, 147, 26, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(247, 147, 26, 0.2);
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    .endpoint-link:hover {
+      background: rgba(247, 147, 26, 0.2);
+      transform: translateX(3px);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 600;
+      background: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: #888;
+      font-size: 0.9em;
+    }
+    footer a {
+      color: #f7931a;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+      h1 { font-size: 2em; }
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>⚡ Bitcoin Solo Mining Pool</h1>
-    
-    <div class="info">
-      <strong>⚠️ Important:</strong> This is a <strong>SOLO mining pool</strong>. You only get rewards if you find a block. 
-      Most miners find zero blocks. This is NOT a traditional pool with regular payouts.
+    <header>
+      <h1>Bitcoin Solo Mining Pool</h1>
+      <div class="subtitle">Production Mining Pool Status Dashboard</div>
+      <div style="margin-top: 15px;">
+        <span class="status-badge">● OPERATIONAL</span>
+      </div>
+    </header>
+
+    <div class="warning-banner">
+      <strong>Important Notice</strong>
+      <p>This is a SOLO mining pool. Rewards are only distributed when a block is found. Most miners find zero blocks. This is NOT a traditional pool with regular payouts.</p>
     </div>
-    
-    <h2>📊 Pool Status</h2>
-    <div class="endpoint">
-      <strong>Health Check:</strong> <a href="/health">/health</a>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Pool Statistics</h2>
+        <div class="stat-item">
+          <span class="stat-label">Active Connections</span>
+          <span class="stat-value highlight">${metrics.connections}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Shares</span>
+          <span class="stat-value">${metrics.totalShares.toLocaleString()}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Valid Shares</span>
+          <span class="stat-value">${metrics.validShares.toLocaleString()}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Blocks Found</span>
+          <span class="stat-value highlight">${metrics.blocksFound}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Server Uptime</span>
+          <span class="stat-value">${uptimeDisplay}</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Connection Details</h2>
+        <div class="connection-box">
+          <div class="connection-item">
+            <div class="connection-label">Stratum URL</div>
+            <code>stratum+tcp://mainnet-pool-production.up.railway.app:3333</code>
+          </div>
+          <div class="connection-item">
+            <div class="connection-label">Username Format</div>
+            <code>YOUR_WALLET_ADDRESS.worker-name</code>
+          </div>
+          <div class="connection-item">
+            <div class="connection-label">Password</div>
+            <code>x</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>API Endpoints</h2>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <a href="/health" class="endpoint-link">Health Check →</a>
+          <a href="/metrics" class="endpoint-link">Metrics API →</a>
+        </div>
+      </div>
     </div>
-    <div class="endpoint">
-      <strong>Metrics:</strong> <a href="/metrics">/metrics</a>
-    </div>
-    
-    <h2>🔌 Connection Details</h2>
-    <div class="endpoint">
-      <strong>Stratum URL:</strong> <code>stratum+tcp://mainnet-pool-production.up.railway.app:3333</code><br>
-      <strong>Username:</strong> <code>YOUR_WALLET_ADDRESS.worker-name</code><br>
-      <strong>Password:</strong> <code>x</code>
-    </div>
-    
-    <h2>📝 Quick Stats</h2>
-    <div class="endpoint">
-      <strong>Active Connections:</strong> ${metrics.connections}<br>
-      <strong>Total Shares:</strong> ${metrics.totalShares}<br>
-      <strong>Valid Shares:</strong> ${metrics.validShares}<br>
-      <strong>Blocks Found:</strong> ${metrics.blocksFound}<br>
-      <strong>Uptime:</strong> ${Math.floor((Date.now() - metrics.startTime) / 1000)} seconds
-    </div>
-    
-    <p style="margin-top: 30px; color: #666; font-size: 0.9em;">
-      For detailed instructions, see <a href="https://github.com/your-repo/MINER_INSTRUCTIONS.md">MINER_INSTRUCTIONS.md</a>
-    </p>
+
+    <footer>
+      <p>Bitcoin Solo Mining Pool | Production Server</p>
+      <p style="margin-top: 10px;">
+        For detailed miner instructions, see <a href="#">MINER_INSTRUCTIONS.md</a>
+      </p>
+    </footer>
   </div>
 </body>
 </html>`);
