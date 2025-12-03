@@ -1,0 +1,25 @@
+{
+  "name": "bitcoin-stratum-pool",
+  "version": "1.0.0",
+  "description": "Production-ready Bitcoin Stratum mining pool server",
+  "main": "server_stratum_v1_production.js",
+  "scripts": {
+    "start": "node server_stratum_v1_production.js",
+    "test": "node tools/miner_simulator.js 127.0.0.1 3333 sim.worker",
+    "test:regtest": "docker compose -f docker-compose-regtest.yml up -d && sleep 5 && node server_stratum_v1_production.js"
+  },
+  "keywords": [
+    "bitcoin",
+    "mining",
+    "stratum",
+    "pool"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {}
+}
+
+

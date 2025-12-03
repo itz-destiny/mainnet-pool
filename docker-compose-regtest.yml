@@ -1,0 +1,17 @@
+services:
+  bitcoind-regtest:
+    image: bitcoin/bitcoin:latest
+    container_name: bitcoind-regtest
+    command:
+      -printtoconsole
+      -regtest=1
+      -rpcallowip=0.0.0.0/0
+      -rpcbind=0.0.0.0
+      -rpcport=18443
+      -rpcuser=rpcuser
+      -rpcpassword=rpcpass
+      -deprecatedrpc=generate
+    ports:
+      - "18443:18443"
+    volumes:
+      - ./regtestdata:/home/bitcoin/.bitcoin
