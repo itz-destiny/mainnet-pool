@@ -12,6 +12,7 @@ const MAX_CONNECTIONS = parseInt(process.env.MAX_CONNECTIONS || '1000');
 const RATE_LIMIT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW || '60000'); // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100');
 const COINBASE_PAYOUT_ADDRESS = process.env.COINBASE_PAYOUT_ADDRESS;
+const ACCESS_CODE = process.env.ACCESS_CODE || '847392'; // 6-digit access code for connection details
 
 if (!COINBASE_PAYOUT_ADDRESS) {
   console.warn('WARNING: COINBASE_PAYOUT_ADDRESS not set. Blocks will use OP_TRUE output.');
@@ -110,86 +111,93 @@ const httpServer = http.createServer((req, res) => {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
       color: #e0e0e0;
       min-height: 100vh;
       padding: 20px;
       line-height: 1.6;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(247, 147, 26, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(247, 147, 26, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
     }
     .container {
       max-width: 1200px;
       margin: 0 auto;
+      position: relative;
+      z-index: 1;
     }
     header {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 30px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 40px;
       margin-bottom: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
     h1 {
-      font-size: 2.5em;
-      font-weight: 700;
-      color: #f7931a;
+      font-size: 2.8em;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f7931a 0%, #ffab3d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 10px;
-      letter-spacing: -0.5px;
+      letter-spacing: -1px;
     }
     .subtitle {
       color: #b0b0b0;
-      font-size: 1.1em;
+      font-size: 1.15em;
       font-weight: 300;
-    }
-    .warning-banner {
-      background: linear-gradient(135deg, rgba(247, 147, 26, 0.15) 0%, rgba(247, 147, 26, 0.05) 100%);
-      border-left: 4px solid #f7931a;
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 30px;
-      border: 1px solid rgba(247, 147, 26, 0.2);
-    }
-    .warning-banner strong {
-      color: #f7931a;
-      font-size: 1.1em;
-      display: block;
-      margin-bottom: 8px;
-    }
-    .warning-banner p {
-      color: #d0d0d0;
-      margin: 0;
+      letter-spacing: 0.3px;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
       margin-bottom: 30px;
     }
     .card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 25px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     }
     .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+      border-color: rgba(247, 147, 26, 0.3);
     }
     .card h2 {
-      font-size: 1.3em;
+      font-size: 1.4em;
       color: #f7931a;
-      margin-bottom: 20px;
-      font-weight: 600;
+      margin-bottom: 24px;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      letter-spacing: -0.3px;
     }
     .stat-item {
       display: flex;
       justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .stat-item:last-child {
       border-bottom: none;
@@ -197,24 +205,27 @@ const httpServer = http.createServer((req, res) => {
     .stat-label {
       color: #b0b0b0;
       font-weight: 500;
+      font-size: 0.95em;
     }
     .stat-value {
       color: #fff;
-      font-weight: 600;
-      font-size: 1.1em;
+      font-weight: 700;
+      font-size: 1.2em;
+      letter-spacing: -0.3px;
     }
     .stat-value.highlight {
       color: #f7931a;
+      text-shadow: 0 0 10px rgba(247, 147, 26, 0.3);
     }
     .connection-box {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-      padding: 20px;
-      margin-top: 15px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 20px;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .connection-item {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     }
     .connection-item:last-child {
       margin-bottom: 0;
@@ -222,62 +233,235 @@ const httpServer = http.createServer((req, res) => {
     .connection-label {
       color: #b0b0b0;
       font-size: 0.9em;
-      margin-bottom: 5px;
-      font-weight: 500;
+      margin-bottom: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     code {
-      background: rgba(0, 0, 0, 0.4);
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-family: 'Courier New', monospace;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
       color: #f7931a;
       display: block;
       word-break: break-all;
-      border: 1px solid rgba(247, 147, 26, 0.2);
-      font-size: 0.95em;
+      border: 1px solid rgba(247, 147, 26, 0.3);
+      font-size: 0.9em;
+      line-height: 1.6;
     }
     .endpoint-link {
       display: inline-flex;
       align-items: center;
       color: #f7931a;
       text-decoration: none;
-      padding: 8px 16px;
+      padding: 12px 20px;
       background: rgba(247, 147, 26, 0.1);
-      border-radius: 6px;
-      border: 1px solid rgba(247, 147, 26, 0.2);
-      transition: all 0.2s;
-      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid rgba(247, 147, 26, 0.3);
+      transition: all 0.3s;
+      font-weight: 600;
+      width: 100%;
+      justify-content: space-between;
     }
     .endpoint-link:hover {
       background: rgba(247, 147, 26, 0.2);
-      transform: translateX(3px);
+      transform: translateX(4px);
+      border-color: rgba(247, 147, 26, 0.5);
     }
     .status-badge {
       display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.85em;
-      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 0.9em;
+      font-weight: 700;
       background: rgba(40, 167, 69, 0.2);
-      color: #28a745;
-      border: 1px solid rgba(40, 167, 69, 0.3);
+      color: #4ade80;
+      border: 1px solid rgba(40, 167, 69, 0.4);
+      box-shadow: 0 0 20px rgba(40, 167, 69, 0.2);
+    }
+    .unlock-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(247, 147, 26, 0.2) 0%, rgba(247, 147, 26, 0.1) 100%);
+      border: 2px solid rgba(247, 147, 26, 0.4);
+      border-radius: 12px;
+      color: #f7931a;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .unlock-btn:hover {
+      background: linear-gradient(135deg, rgba(247, 147, 26, 0.3) 0%, rgba(247, 147, 26, 0.2) 100%);
+      border-color: rgba(247, 147, 26, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(247, 147, 26, 0.3);
+    }
+    .locked-placeholder {
+      text-align: center;
+      padding: 40px 20px;
+      color: #888;
+      font-size: 0.95em;
+    }
+    .locked-icon {
+      font-size: 3em;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal {
+      background: linear-gradient(135deg, rgba(30, 30, 50, 0.95) 0%, rgba(20, 20, 40, 0.95) 100%);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 480px;
+      width: 90%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s;
+    }
+    .modal-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .modal-title {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #f7931a;
+      margin-bottom: 8px;
+    }
+    .modal-subtitle {
+      color: #b0b0b0;
+      font-size: 0.95em;
+    }
+    .otp-container {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .otp-input {
+      width: 60px;
+      height: 70px;
+      text-align: center;
+      font-size: 2em;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      color: #fff;
+      transition: all 0.3s;
+      font-family: 'SF Mono', monospace;
+    }
+    .otp-input:focus {
+      outline: none;
+      border-color: #f7931a;
+      background: rgba(247, 147, 26, 0.1);
+      box-shadow: 0 0 20px rgba(247, 147, 26, 0.3);
+    }
+    .otp-input.filled {
+      border-color: rgba(247, 147, 26, 0.5);
+    }
+    .error-message {
+      color: #ff4444;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      min-height: 20px;
+      animation: shake 0.5s;
+    }
+    .modal-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #f7931a 0%, #ffab3d 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.1em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 16px rgba(247, 147, 26, 0.4);
+    }
+    .modal-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(247, 147, 26, 0.5);
+    }
+    .modal-btn:active {
+      transform: translateY(0);
+    }
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2em;
+      transition: all 0.3s;
+    }
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: rotate(90deg);
     }
     footer {
       text-align: center;
-      padding: 30px;
+      padding: 40px;
       color: #888;
       font-size: 0.9em;
     }
     footer a {
       color: #f7931a;
       text-decoration: none;
+      transition: all 0.3s;
     }
     footer a:hover {
       text-decoration: underline;
+      color: #ffab3d;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
     }
     @media (max-width: 768px) {
-      h1 { font-size: 2em; }
+      h1 { font-size: 2.2em; }
       .grid { grid-template-columns: 1fr; }
+      .modal { padding: 30px 20px; }
+      .otp-input { width: 50px; height: 60px; font-size: 1.6em; }
     }
   </style>
 </head>
@@ -286,15 +470,10 @@ const httpServer = http.createServer((req, res) => {
     <header>
       <h1>Bitcoin Solo Mining Pool</h1>
       <div class="subtitle">Production Mining Pool Status Dashboard</div>
-      <div style="margin-top: 15px;">
+      <div style="margin-top: 20px;">
         <span class="status-badge">● OPERATIONAL</span>
       </div>
     </header>
-
-    <div class="warning-banner">
-      <strong>Important Notice</strong>
-      <p>This is a SOLO mining pool. Rewards are only distributed when a block is found. Most miners find zero blocks. This is NOT a traditional pool with regular payouts.</p>
-    </div>
 
     <div class="grid">
       <div class="card">
@@ -323,18 +502,30 @@ const httpServer = http.createServer((req, res) => {
 
       <div class="card">
         <h2>Connection Details</h2>
-        <div class="connection-box">
-          <div class="connection-item">
-            <div class="connection-label">Stratum URL</div>
-            <code>stratum+tcp://mainnet-pool-production.up.railway.app:3333</code>
+        <div id="connectionContent" style="display: none;">
+          <div class="connection-box">
+            <div class="connection-item">
+              <div class="connection-label">Stratum URL</div>
+              <code>stratum+tcp://mainnet-pool-production.up.railway.app:3333</code>
+            </div>
+            <div class="connection-item">
+              <div class="connection-label">Username Format</div>
+              <code>YOUR_WALLET_ADDRESS.worker-name</code>
+            </div>
+            <div class="connection-item">
+              <div class="connection-label">Password</div>
+              <code>x</code>
+            </div>
           </div>
-          <div class="connection-item">
-            <div class="connection-label">Username Format</div>
-            <code>YOUR_WALLET_ADDRESS.worker-name</code>
-          </div>
-          <div class="connection-item">
-            <div class="connection-label">Password</div>
-            <code>x</code>
+        </div>
+        <div id="connectionLocked">
+          <div class="locked-placeholder">
+            <div class="locked-icon">🔒</div>
+            <p>Connection details are protected</p>
+            <button class="unlock-btn" onclick="openModal()">
+              <span>🔓</span>
+              <span>Unlock Connection Details</span>
+            </button>
           </div>
         </div>
       </div>
@@ -355,6 +546,122 @@ const httpServer = http.createServer((req, res) => {
       </p>
     </footer>
   </div>
+
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <div class="modal-header">
+        <div class="modal-title">Access Required</div>
+        <div class="modal-subtitle">Enter 6-digit access code</div>
+      </div>
+      <div class="error-message" id="errorMessage"></div>
+      <div class="otp-container">
+        <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp1" autocomplete="off">
+        <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp2" autocomplete="off">
+        <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp3" autocomplete="off">
+        <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp4" autocomplete="off">
+        <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp5" autocomplete="off">
+        <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp6" autocomplete="off">
+      </div>
+      <button class="modal-btn" onclick="verifyCode()">Verify Access Code</button>
+    </div>
+  </div>
+
+  <script>
+    const ACCESS_CODE = '${ACCESS_CODE}';
+    
+    // Check if already unlocked
+    if (sessionStorage.getItem('connectionUnlocked') === 'true') {
+      document.getElementById('connectionContent').style.display = 'block';
+      document.getElementById('connectionLocked').style.display = 'none';
+    }
+    
+    function openModal() {
+      document.getElementById('modalOverlay').classList.add('active');
+      document.getElementById('otp1').focus();
+      clearInputs();
+      document.getElementById('errorMessage').textContent = '';
+    }
+    
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+      clearInputs();
+      document.getElementById('errorMessage').textContent = '';
+    }
+    
+    function closeModalOnOverlay(event) {
+      if (event.target.id === 'modalOverlay') {
+        closeModal();
+      }
+    }
+    
+    function clearInputs() {
+      for (let i = 1; i <= 6; i++) {
+        document.getElementById('otp' + i).value = '';
+        document.getElementById('otp' + i).classList.remove('filled');
+      }
+    }
+    
+    // Auto-focus next input
+    for (let i = 1; i <= 6; i++) {
+      const input = document.getElementById('otp' + i);
+      input.addEventListener('input', function(e) {
+        if (this.value.match(/[0-9]/)) {
+          this.classList.add('filled');
+          if (i < 6) {
+            document.getElementById('otp' + (i + 1)).focus();
+          }
+        } else {
+          this.value = '';
+          this.classList.remove('filled');
+        }
+      });
+      
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace' && this.value === '' && i > 1) {
+          document.getElementById('otp' + (i - 1)).focus();
+        }
+      });
+    }
+    
+    function verifyCode() {
+      let code = '';
+      for (let i = 1; i <= 6; i++) {
+        code += document.getElementById('otp' + i).value;
+      }
+      
+      if (code.length !== 6) {
+        document.getElementById('errorMessage').textContent = 'Please enter all 6 digits';
+        return;
+      }
+      
+      if (code === ACCESS_CODE) {
+        sessionStorage.setItem('connectionUnlocked', 'true');
+        document.getElementById('connectionContent').style.display = 'block';
+        document.getElementById('connectionLocked').style.display = 'none';
+        closeModal();
+      } else {
+        document.getElementById('errorMessage').textContent = 'Invalid access code. Please try again.';
+        clearInputs();
+        document.getElementById('otp1').focus();
+        // Shake animation
+        document.querySelector('.modal').style.animation = 'shake 0.5s';
+        setTimeout(() => {
+          document.querySelector('.modal').style.animation = '';
+        }, 500);
+      }
+    }
+    
+    // Allow Enter key to submit
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('active')) {
+        verifyCode();
+      }
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    });
+  </script>
 </body>
 </html>`);
   } else if (req.url === '/health') {
