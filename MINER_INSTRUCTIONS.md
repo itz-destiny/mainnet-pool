@@ -1,9 +1,35 @@
 # Instructions for Miners - Copy & Share This
 
+## 🌐 Deployment Information
+
+**Railway Deployment:**
+- **Stratum Mining Port (TCP):** Port `3333` - Use `stratum+tcp://` protocol
+- **HTTP/HTTPS Interface:** Port `3000` (or Railway's auto-assigned port) - Use `https://` protocol
+
+**⚠️ Important:** 
+- Port `3333` is for **Stratum TCP connections** (miners connect here)
+- Port `3000` is for **HTTP/HTTPS** (health checks and metrics)
+- **DO NOT** use `https://` with port `3333` - Stratum uses `stratum+tcp://` protocol
+
+**Correct URLs:**
+- ✅ Mining: `stratum+tcp://mainnet-pool-production.up.railway.app:3333`
+- ✅ Health: `https://mainnet-pool-production.up.railway.app/health`
+- ❌ Wrong: `https://mainnet-pool-production.up.railway.app:3333` (Stratum is TCP, not HTTPS)
+
+---
+
 ## 🎯 How to Connect to Our Mining Pool
 
 ### Connection Details
 
+**🚀 Railway Deployment:**
+```
+Pool URL: stratum+tcp://mainnet-pool-production.up.railway.app:3333
+Username: YOUR_WALLET_ADDRESS.worker-name
+Password: x
+```
+
+**Or for custom server:**
 ```
 Pool URL: stratum+tcp://YOUR-SERVER-IP:3333
 Username: YOUR_WALLET_ADDRESS.worker-name
@@ -11,7 +37,6 @@ Password: x
 ```
 
 **Replace:**
-- `YOUR-SERVER-IP` with your actual server IP address
 - `YOUR_WALLET_ADDRESS` with the Bitcoin address where you want rewards
 - `worker-name` with any name to identify your miner (e.g., "worker1", "gpu1")
 
@@ -31,7 +56,7 @@ Password: x
 
 3. **Enter Pool Details:**
    ```
-   URL: stratum+tcp://YOUR-SERVER-IP:3333
+   URL: stratum+tcp://mainnet-pool-production.up.railway.app:3333
    Worker: YOUR_WALLET_ADDRESS.worker1
    Password: x
    ```
@@ -45,7 +70,7 @@ Password: x
 
 **Command Line:**
 ```bash
-cgminer -o stratum+tcp://YOUR-SERVER-IP:3333 -u YOUR_WALLET_ADDRESS.worker1 -p x
+cgminer -o stratum+tcp://mainnet-pool-production.up.railway.app:3333 -u YOUR_WALLET_ADDRESS.worker1 -p x
 ```
 
 **Or create config file `cgminer.conf`:**
@@ -53,7 +78,7 @@ cgminer -o stratum+tcp://YOUR-SERVER-IP:3333 -u YOUR_WALLET_ADDRESS.worker1 -p x
 {
   "pools" : [
     {
-      "url" : "stratum+tcp://YOUR-SERVER-IP:3333",
+      "url" : "stratum+tcp://mainnet-pool-production.up.railway.app:3333",
       "user" : "YOUR_WALLET_ADDRESS.worker1",
       "pass" : "x"
     }
@@ -67,7 +92,7 @@ cgminer -o stratum+tcp://YOUR-SERVER-IP:3333 -u YOUR_WALLET_ADDRESS.worker1 -p x
 2. Go to "Settings" → "Mining Pools"
 3. Click "Add Custom Pool"
 4. Enter:
-   - **Pool URL:** `stratum+tcp://YOUR-SERVER-IP:3333`
+   - **Pool URL:** `stratum+tcp://mainnet-pool-production.up.railway.app:3333`
    - **Username:** `YOUR_WALLET_ADDRESS.worker1`
    - **Password:** `x`
 5. Click "Add" and select this pool
@@ -117,10 +142,16 @@ cgminer -o stratum+tcp://YOUR-SERVER-IP:3333 -u YOUR_WALLET_ADDRESS.worker1 -p x
 ## 📊 How to Check Your Status
 
 ### Check Pool Status:
-```
-http://YOUR-SERVER-IP:3000/health
-http://YOUR-SERVER-IP:3000/metrics
-```
+
+**Railway Deployment:**
+- **Main Page:** `https://mainnet-pool-production.up.railway.app/` (shows pool info and stats)
+- **Health Check:** `https://mainnet-pool-production.up.railway.app/health`
+- **Metrics:** `https://mainnet-pool-production.up.railway.app/metrics`
+
+**Custom Server:**
+- **Main Page:** `http://YOUR-SERVER-IP:3000/` (shows pool info and stats)
+- **Health Check:** `http://YOUR-SERVER-IP:3000/health`
+- **Metrics:** `http://YOUR-SERVER-IP:3000/metrics`
 
 ### What You'll See:
 - **Active Connections:** Number of miners connected
@@ -142,7 +173,12 @@ http://YOUR-SERVER-IP:3000/metrics
 
 **Test Connection:**
 ```bash
+# Railway deployment:
+telnet mainnet-pool-production.up.railway.app 3333
+
+# Custom server:
 telnet YOUR-SERVER-IP 3333
+
 # Should connect (press Ctrl+] then type 'quit' to exit)
 ```
 
@@ -175,7 +211,8 @@ telnet YOUR-SERVER-IP 3333
 - Telegram: [YOUR-TELEGRAM]
 
 **Status Page:**
-- http://YOUR-SERVER-IP:3000/health
+- Railway: https://mainnet-pool-production.up.railway.app/health
+- Custom Server: http://YOUR-SERVER-IP:3000/health
 
 ---
 
@@ -189,7 +226,7 @@ Before connecting:
 - [ ] You're okay with potentially mining for months/years
 
 Connection details:
-- [ ] Pool URL: `stratum+tcp://YOUR-SERVER-IP:3333`
+- [ ] Pool URL: `stratum+tcp://mainnet-pool-production.up.railway.app:3333`
 - [ ] Username: `YOUR_WALLET_ADDRESS.worker-name`
 - [ ] Password: `x`
 
@@ -207,7 +244,14 @@ bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh.worker1
 - `.` = Separator
 - `worker1` = Worker name (can be anything: gpu1, asic1, etc.)
 
-**Full Configuration:**
+**Full Configuration (Railway):**
+```
+URL: stratum+tcp://mainnet-pool-production.up.railway.app:3333
+Worker: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh.worker1
+Password: x
+```
+
+**Full Configuration (Custom Server):**
 ```
 URL: stratum+tcp://192.168.1.100:3333
 Worker: bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh.worker1
@@ -219,7 +263,7 @@ Password: x
 ## 🎯 Summary
 
 **What You Need:**
-1. Pool URL: `stratum+tcp://YOUR-SERVER-IP:3333`
+1. Pool URL: `stratum+tcp://mainnet-pool-production.up.railway.app:3333`
 2. Worker name: `YOUR_WALLET_ADDRESS.worker-name`
 3. Password: `x`
 

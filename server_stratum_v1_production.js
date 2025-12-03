@@ -87,7 +87,66 @@ const jobs = new JobDistributor();
 
 // HTTP server for health checks and metrics
 const httpServer = http.createServer((req, res) => {
-  if (req.url === '/health') {
+  if (req.url === '/') {
+    // Root page with pool information
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Bitcoin Solo Mining Pool</title>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+    .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { color: #f7931a; margin-top: 0; }
+    .info { background: #fff9e6; padding: 15px; border-left: 4px solid #f7931a; margin: 20px 0; }
+    .endpoint { background: #f8f8f8; padding: 10px; margin: 10px 0; border-radius: 4px; }
+    a { color: #f7931a; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .status { display: inline-block; padding: 5px 10px; border-radius: 4px; font-weight: bold; }
+    .healthy { background: #d4edda; color: #155724; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚡ Bitcoin Solo Mining Pool</h1>
+    
+    <div class="info">
+      <strong>⚠️ Important:</strong> This is a <strong>SOLO mining pool</strong>. You only get rewards if you find a block. 
+      Most miners find zero blocks. This is NOT a traditional pool with regular payouts.
+    </div>
+    
+    <h2>📊 Pool Status</h2>
+    <div class="endpoint">
+      <strong>Health Check:</strong> <a href="/health">/health</a>
+    </div>
+    <div class="endpoint">
+      <strong>Metrics:</strong> <a href="/metrics">/metrics</a>
+    </div>
+    
+    <h2>🔌 Connection Details</h2>
+    <div class="endpoint">
+      <strong>Stratum URL:</strong> <code>stratum+tcp://mainnet-pool-production.up.railway.app:3333</code><br>
+      <strong>Username:</strong> <code>YOUR_WALLET_ADDRESS.worker-name</code><br>
+      <strong>Password:</strong> <code>x</code>
+    </div>
+    
+    <h2>📝 Quick Stats</h2>
+    <div class="endpoint">
+      <strong>Active Connections:</strong> ${metrics.connections}<br>
+      <strong>Total Shares:</strong> ${metrics.totalShares}<br>
+      <strong>Valid Shares:</strong> ${metrics.validShares}<br>
+      <strong>Blocks Found:</strong> ${metrics.blocksFound}<br>
+      <strong>Uptime:</strong> ${Math.floor((Date.now() - metrics.startTime) / 1000)} seconds
+    </div>
+    
+    <p style="margin-top: 30px; color: #666; font-size: 0.9em;">
+      For detailed instructions, see <a href="https://github.com/your-repo/MINER_INSTRUCTIONS.md">MINER_INSTRUCTIONS.md</a>
+    </p>
+  </div>
+</body>
+</html>`);
+  } else if (req.url === '/health') {
     jobs.healthCheck().then(health => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
